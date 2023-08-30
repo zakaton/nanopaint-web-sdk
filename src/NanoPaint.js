@@ -206,6 +206,9 @@ class Nanopaint extends EventDispatcher {
   rawValueRanges = new Array(this.numberOfPressureSensors).fill(0).map((_) => {
     return { min: Infinity, max: -Infinity };
   });
+  valueRanges = new Array(this.numberOfPressureSensors).fill(0).map((_) => {
+    return { min: Infinity, max: -Infinity };
+  });
   normalizeValue(value, range) {
     return (value - range.min) / (range.max - range.min);
   }
@@ -213,14 +216,14 @@ class Nanopaint extends EventDispatcher {
     let dataView = event.target.value;
     //this.log("onMainCharacteristicValueChanged", event, dataView);
     const rawValues = [];
-    const normalizedValues = [];
+    const normalizedRawValues = [];
     for (let index = 0; index < this.numberOfPressureSensors; index++) {
       const rawValue = dataView.getUint16(index * 2, true);
       rawValues[index] = rawValue;
       const rawValueRange = this.rawValueRanges[index];
       rawValueRange.min = Math.min(rawValue, rawValueRange.min);
       rawValueRange.max = Math.max(rawValue, rawValueRange.max);
-      normalizedValues[index] =
+      normalizedRawValues[index] =
         this.normalizeValue(rawValue, rawValueRange) || 0;
     }
     //console.log(rawValues);
@@ -230,21 +233,30 @@ class Nanopaint extends EventDispatcher {
     });
     //console.log(normalizedValues);
     this.dispatchEvent({
-      type: "normalizedValues",
-      message: { values: normalizedValues },
+      type: "normalizedRawValues",
+      message: { values: normalizedRawValues },
     });
 
     const values = [];
+    const normalizedValues = [];
     rawValues.forEach((rawValue, index) => {
       const msb4 = (rawValue & 0xf000) >>> 12; // resistValues table index
       const lsb12 = rawValue & 0xfff; // Sensor Value
       const vOut = (lsb12 * 3.3) / 4095; // output voltage value
       const value = (this.resistValues[msb4] * (3.3 - vOut)) / vOut - 130; // sensor value in ohms
-      values.push(value);
+      values[index] = value;
+      const valueRange = this.valueRanges[index];
+      valueRange.min = Math.min(value, valueRange.min);
+      valueRange.max = Math.max(value, valueRange.max);
+      normalizedValues[index] = this.normalizeValue(value, valueRange) || 0;
     });
     this.dispatchEvent({
       type: "values",
       message: { values },
+    });
+    this.dispatchEvent({
+      type: "normalizedValues",
+      message: { values: normalizedValues },
     });
     //console.log(values);
   }
