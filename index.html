@@ -11,9 +11,10 @@
   <body>
     <h1>Nanopaint Web SDK</h1>
 
+    <label>name: <input id="name" type="text" max="20" /></label>
     <button id="connectButton">connect</button>
 
-    <div id="connected">
+    <div id="connected" hidden>
       <label
         >sample rate (ms)
         <input
@@ -24,6 +25,8 @@
           step="10"
           max="1000"
       /></label>
+      <br />
+      <button id="resetSensorRanges" disabled>reset sensor ranges</button>
 
       <ol id="sensors"></ol>
 
@@ -56,15 +59,28 @@
       await nanopaint.setSampleRate(sampleRate);
     });
 
+    const nameInput = document.getElementById("name");
+    nameInput.addEventListener("input", (event) => {
+      saveNameToLocalStorage(event.target.value);
+    });
+
     const connectButton = document.getElementById("connectButton");
-    connectButton.addEventListener("click", () => nanopaint.connect());
+    connectButton.addEventListener("click", () =>
+      nanopaint.connect(nameInput.value)
+    );
     nanopaint.addEventListener("connected", () => {
-      connectButton.setAttribute("hidden", "");
+      connectButton.disabled = true;
       connectedContainer.removeAttribute("hidden");
+      nameInput.disabled = true;
+      nameInput.value = nanopaint.device.name;
+      resetSensorRangesButton.disabled = false;
+      saveNameToLocalStorage(nanopaint.device.name);
     });
     nanopaint.addEventListener("disconnected", () => {
-      connectButton.removeAttribute("hidden");
+      connectButton.disabled = false;
       connectedContainer.setAttribute("hidden", "");
+      nameInput.disabled = false;
+      resetSensorRangesButton.disabled = true;
     });
     nanopaint.addEventListener("normalizedValues", (event) => {
       const { values } = event.message;
@@ -72,6 +88,29 @@
         const progress = sensorProgresses[index];
         progress.value = value;
       });
+    });
+
+    const saveNameToLocalStorage = (name) => {
+      localStorage.name = name;
+    };
+    const loadNameFromLocalStorage = () => {
+      if (localStorage.name) {
+        nameInput.value = localStorage.name;
+      }
+    };
+    loadNameFromLocalStorage();
+
+    const saveSensorRangesToLocalStorage = () => {
+      // FILL
+    };
+    const loadSensorRangesFromLocalStorage = () => {
+      // FILL
+    };
+
+    const resetSensorRangesButton =
+      document.getElementById("resetSensorRanges");
+    resetSensorRangesButton.addEventListener("click", () => {
+      // FILL
     });
   </script>
 </html>

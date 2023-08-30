@@ -105,7 +105,7 @@ class Nanopaint extends EventDispatcher {
     return this.device && this.device.gatt.connected;
   }
 
-  async connect() {
+  async connect(name) {
     this.log("attempting to connect...");
     if (this.isConnected) {
       this.log("already connected");
@@ -113,17 +113,19 @@ class Nanopaint extends EventDispatcher {
     }
 
     this.log("getting device...");
-    this.device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      /*
-      filters: [
-        {
-          services: [this.services.main.uuid],
-        },
-      ],
-      */
-      optionalServices: [this.services.main.uuid],
-    });
+    const requestDeviceOptions = Boolean(name)
+      ? {
+          filters: [{ name }],
+        }
+      : {
+          acceptAllDevices: true,
+          // filters: [
+          //   {
+          //     services: [this.services.main.uuid],
+          //   },
+          // ],
+        };
+    this.device = await navigator.bluetooth.requestDevice(requestDeviceOptions);
 
     this.log("got device!");
     this.device.addEventListener(
