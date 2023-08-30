@@ -125,6 +125,7 @@ class Nanopaint extends EventDispatcher {
           //   },
           // ],
         };
+    requestDeviceOptions.optionalServices = [this.services.main.uuid];
     this.device = await navigator.bluetooth.requestDevice(requestDeviceOptions);
 
     this.log("got device!");
