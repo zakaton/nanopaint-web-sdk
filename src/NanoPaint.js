@@ -200,8 +200,11 @@ class Nanopaint extends EventDispatcher {
   onMainCharacteristicValueChanged(event) {
     let dataView = event.target.value;
     //this.log("onMainCharacteristicValueChanged", event, dataView);
-    const rawValues = new Uint16Array(dataView.buffer)
-    console.log(dataView, rawValues)
+    const rawValues = [];
+    for (let index = 0; index < dataView.byteLength; index += 2) {
+      rawValues.push(dataView.getUint16(index, true));
+    }
+    //console.log(rawValues);
     const values = [];
     rawValues.forEach((rawValue, index) => {
       const msb4 = (rawValue & 0xf000) >>> 12; // resistValues table index
@@ -210,7 +213,7 @@ class Nanopaint extends EventDispatcher {
       const value = (this.resistValues[msb4] * (3.3 - vOut)) / vOut - 130; // sensor value in ohms
       values.push(value);
     });
-    console.log(values)
+    console.log(values);
   }
 
   async writeValue(value) {

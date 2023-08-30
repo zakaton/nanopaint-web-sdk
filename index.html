@@ -21,6 +21,7 @@
     connectButton.addEventListener("click", () => nanopaint.connect());
     nanopaint.addEventListener("connected", () => {
       connectButton.setAttribute("hidden", "");
+      nanopaint.writeValue(100);
     });
     nanopaint.addEventListener("disconnected", () => {
       connectButton.removeAttribute("hidden");
