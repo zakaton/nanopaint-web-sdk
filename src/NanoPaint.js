@@ -211,6 +211,15 @@ class Nanopaint extends EventDispatcher {
   valueRanges = new Array(this.numberOfPressureSensors).fill(0).map((_) => {
     return { min: Infinity, max: -Infinity };
   });
+  resetValueRanges() {
+    for (let index = 0; index < this.numberOfPressureSensors; index++) {
+      const ranges = [this.rawValueRanges[index], this.valueRanges[index]];
+      ranges.forEach((range) => {
+        range.min = Infinity;
+        range.max = -Infinity;
+      });
+    }
+  }
   normalizeValue(value, range) {
     return (value - range.min) / (range.max - range.min);
   }

@@ -26,9 +26,9 @@
           max="1000"
       /></label>
       <br />
-      <button id="resetSensorRanges" disabled>reset sensor ranges</button>
 
       <ol id="sensors"></ol>
+      <button id="resetSensorRanges" disabled>reset sensor ranges</button>
 
       <template id="sensorTemplate">
         <li class="sensor">
@@ -59,6 +59,12 @@
       await nanopaint.setSampleRate(sampleRate);
     });
 
+    const resetSensorRangesButton =
+      document.getElementById("resetSensorRanges");
+    resetSensorRangesButton.addEventListener("click", () => {
+      nanopaint.resetValueRanges();
+    });
+
     const nameInput = document.getElementById("name");
     nameInput.addEventListener("input", (event) => {
       saveNameToLocalStorage(event.target.value);
@@ -82,7 +88,11 @@
       nameInput.disabled = false;
       resetSensorRangesButton.disabled = true;
     });
+
+    let gotSensorData = false;
     nanopaint.addEventListener("normalizedValues", (event) => {
+      gotSensorData = true;
+
       const { values } = event.message;
       values.forEach((value, index) => {
         const progress = sensorProgresses[index];
@@ -101,16 +111,21 @@
     loadNameFromLocalStorage();
 
     const saveSensorRangesToLocalStorage = () => {
-      // FILL
+      if (nanopaint.isConnected && gotSensorData) {
+        localStorage.valueRanges = JSON.stringify(nanopaint.valueRanges);
+      }
     };
     const loadSensorRangesFromLocalStorage = () => {
-      // FILL
+      let { valueRanges } = localStorage;
+      if (valueRanges) {
+        valueRanges = JSON.parse(valueRanges);
+        nanopaint.valueRanges = valueRanges;
+      }
     };
+    loadSensorRangesFromLocalStorage();
 
-    const resetSensorRangesButton =
-      document.getElementById("resetSensorRanges");
-    resetSensorRangesButton.addEventListener("click", () => {
-      // FILL
+    window.addEventListener("beforeunload", () => {
+      saveSensorRangesToLocalStorage();
     });
   </script>
 </html>
