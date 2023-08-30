@@ -1,12 +1,31 @@
 <html>
   <head>
     <title>Nanopaint Web SDK</title>
-    <link rel="icon" type="image/x-icon" href="https://cdn.glitch.global/1f41f414-1365-4acf-9f8c-bff8c305c06b/nanopaint-icon.png?v=1692827697875">
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="https://cdn.glitch.global/1f41f414-1365-4acf-9f8c-bff8c305c06b/nanopaint-icon.png?v=1692827697875"
+    />
     <script src="src/NanoPaint.js"></script>
   </head>
   <body>
-    <h1>
-      Nanopaint Web SDK
-    </h1>
+    <h1>Nanopaint Web SDK</h1>
+
+    <button id="connectButton">connect</button>
   </body>
+
+  <script>
+    const nanopaint = new Nanopaint();
+
+    const connectButton = document.getElementById("connectButton");
+    connectButton.addEventListener("click", () => nanopaint.connect());
+    nanopaint.addEventListener("connected", () => {
+      connectButton.setAttribute("hidden", "")
+    })
+    nanopaint.addEventListener("disconnected", () => {
+      connectButton.removeAttribute("hidden")
+    })
+    
+    
+  </script>
 </html>
