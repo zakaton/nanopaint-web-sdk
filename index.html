@@ -20,12 +20,10 @@
     const connectButton = document.getElementById("connectButton");
     connectButton.addEventListener("click", () => nanopaint.connect());
     nanopaint.addEventListener("connected", () => {
-      connectButton.setAttribute("hidden", "")
-    })
+      connectButton.setAttribute("hidden", "");
+    });
     nanopaint.addEventListener("disconnected", () => {
-      connectButton.removeAttribute("hidden")
-    })
-    
-    
+      connectButton.removeAttribute("hidden");
+    });
   </script>
 </html>
