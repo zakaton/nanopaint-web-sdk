@@ -12,19 +12,66 @@
     <h1>Nanopaint Web SDK</h1>
 
     <button id="connectButton">connect</button>
+
+    <div id="connected">
+      <label
+        >sample rate (ms)
+        <input
+          id="sampleRate"
+          value="0"
+          type="number"
+          min="0"
+          step="10"
+          max="1000"
+      /></label>
+
+      <ol id="sensors"></ol>
+
+      <template id="sensorTemplate">
+        <li class="sensor">
+          <progress min="0" max="1" value="0"></progress>
+        </li>
+      </template>
+    </div>
   </body>
 
   <script>
     const nanopaint = new Nanopaint();
 
+    const connectedContainer = document.getElementById("connected");
+    const sensorsContainer = document.getElementById("sensors");
+    const sensorProgresses = [];
+    const sensorTemplate = document.getElementById("sensorTemplate");
+    for (let index = 0; index < nanopaint.numberOfPressureSensors; index++) {
+      const sensorContainer = sensorTemplate.content
+        .cloneNode(true)
+        .querySelector(".sensor");
+      sensorsContainer.appendChild(sensorContainer);
+      sensorProgresses[index] = sensorContainer.querySelector("progress");
+    }
+
+    const sampleRateInput = document.getElementById("sampleRate");
+    sampleRateInput.addEventListener("input", async (event) => {
+      const sampleRate = Number(event.target.value);
+      await nanopaint.setSampleRate(sampleRate);
+    });
+
     const connectButton = document.getElementById("connectButton");
     connectButton.addEventListener("click", () => nanopaint.connect());
     nanopaint.addEventListener("connected", () => {
       connectButton.setAttribute("hidden", "");
-      nanopaint.writeValue(100);
+      connectedContainer.removeAttribute("hidden");
     });
     nanopaint.addEventListener("disconnected", () => {
       connectButton.removeAttribute("hidden");
+      connectedContainer.setAttribute("hidden", "");
+    });
+    nanopaint.addEventListener("normalizedValues", (event) => {
+      const { values } = event.message;
+      values.forEach((value, index) => {
+        const progress = sensorProgresses[index];
+        progress.value = value;
+      });
     });
   </script>
 </html>

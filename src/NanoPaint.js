@@ -114,11 +114,15 @@ class Nanopaint extends EventDispatcher {
 
     this.log("getting device...");
     this.device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      /*
       filters: [
         {
           services: [this.services.main.uuid],
         },
       ],
+      */
+      optionalServices: [this.services.main.uuid],
     });
 
     this.log("got device!");
@@ -197,14 +201,39 @@ class Nanopaint extends EventDispatcher {
     100, 337.7, 510, 836.1, 1000, 3337, 5100, 8485, 10000, 35897, 56000, 82456,
     10000, 319729, 470000, 1000000,
   ];
+
+  numberOfPressureSensors = 16;
+  rawValueRanges = new Array(this.numberOfPressureSensors).fill(0).map((_) => {
+    return { min: Infinity, max: -Infinity };
+  });
+  normalizeValue(value, range) {
+    return (value - range.min) / (range.max - range.min);
+  }
   onMainCharacteristicValueChanged(event) {
     let dataView = event.target.value;
     //this.log("onMainCharacteristicValueChanged", event, dataView);
     const rawValues = [];
-    for (let index = 0; index < dataView.byteLength; index += 2) {
-      rawValues.push(dataView.getUint16(index, true));
+    const normalizedValues = [];
+    for (let index = 0; index < this.numberOfPressureSensors; index++) {
+      const rawValue = dataView.getUint16(index * 2, true);
+      rawValues[index] = rawValue;
+      const rawValueRange = this.rawValueRanges[index];
+      rawValueRange.min = Math.min(rawValue, rawValueRange.min);
+      rawValueRange.max = Math.max(rawValue, rawValueRange.max);
+      normalizedValues[index] =
+        this.normalizeValue(rawValue, rawValueRange) || 0;
     }
     //console.log(rawValues);
+    this.dispatchEvent({
+      type: "rawValues",
+      message: { values: rawValues },
+    });
+    //console.log(normalizedValues);
+    this.dispatchEvent({
+      type: "normalizedValues",
+      message: { values: normalizedValues },
+    });
+
     const values = [];
     rawValues.forEach((rawValue, index) => {
       const msb4 = (rawValue & 0xf000) >>> 12; // resistValues table index
@@ -213,18 +242,29 @@ class Nanopaint extends EventDispatcher {
       const value = (this.resistValues[msb4] * (3.3 - vOut)) / vOut - 130; // sensor value in ohms
       values.push(value);
     });
-    console.log(values);
+    this.dispatchEvent({
+      type: "values",
+      message: { values },
+    });
+    //console.log(values);
   }
 
-  async writeValue(value) {
+  async _writeValue(value) {
     if (this.isConnected) {
       const valueArray = [];
       valueArray[0] = (value >> 8) & 0xff;
       valueArray[1] = value & 0xff;
+      this.log("writing value", valueArray);
       const byteArray = Uint8Array.from(valueArray);
       await this.services.main.characteristics.main.characteristic.writeValue(
         byteArray
       );
     }
+  }
+  async setSampleRate(sampleRate) {
+    if (sampleRate == 0) {
+      sampleRate = 1000;
+    }
+    await this._writeValue(sampleRate);
   }
 }
